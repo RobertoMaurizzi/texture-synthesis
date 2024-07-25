@@ -89,7 +89,7 @@ impl fmt::Display for Error {
             }
             Self::Io(io) => write!(f, "{}", io),
             Self::UnsupportedOutputFormat(fmt) => {
-                write!(f, "the output format '{}' is not supported", fmt)
+                write!(f, "{}", fmt)
             }
             Self::NoExamples => write!(
                 f,
