@@ -46,7 +46,7 @@ impl HashImage for MyPrecious<DynamicImage> {
     }
 
     fn to_bytes(self) -> Vec<u8> {
-        self.0.to_bytes()
+        self.0.into_bytes()
     }
 
     fn channel_count() -> u8 {
