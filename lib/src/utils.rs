@@ -61,7 +61,6 @@ pub(crate) fn load_image(
     let img = match resize {
         None => img.to_rgba8(),
         Some(ref size) => {
-            use image::GenericImageView;
 
             if img.width() != size.width || img.height() != size.height {
                 image::imageops::resize(
@@ -103,12 +102,11 @@ pub(crate) fn transform_to_guide_map(
     size: Option<Dims>,
     blur_sigma: f32,
 ) -> image::RgbaImage {
-    use image::GenericImageView;
     let dyn_img = image::DynamicImage::ImageRgba8(image);
 
     if let Some(s) = size {
         if dyn_img.width() != s.width || dyn_img.height() != s.height {
-            dyn_img.resize(s.width, s.height, image::imageops::Triangle);
+            let _ = dyn_img.resize(s.width, s.height, image::imageops::Triangle);
         }
     }
 
