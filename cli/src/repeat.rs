@@ -18,6 +18,7 @@ pub(crate) struct Args {
 }
 
 pub(crate) fn cmd(args: &Args, global_opts: &crate::Opt) -> Result<(), Error> {
+    use texture_synthesis::save_dyn_image_to_stream;
     let transform_path = &args.transform;
 
     let xform = {
@@ -55,9 +56,12 @@ pub(crate) fn cmd(args: &Args, global_opts: &crate::Opt) -> Result<(), Error> {
         let mut out = out.lock();
 
         let dyn_img = ts::image::DynamicImage::ImageRgba8(new_img);
-        dyn_img.write_to(&mut out, global_opts.stdout_fmt.clone())?;
+        save_dyn_image_to_stream(global_opts.stdout_fmt, &mut out, dyn_img)?;
+
     } else {
-        new_img.save(&global_opts.output_path)?;
+        // I hardly believe this will convert a Rgba8 to Jpeg...
+        new_img.save_with_format(&global_opts.output_path, global_opts.stdout_fmt)?;
+        // new_img.save(&global_opts.output_path)?;
     }
 
     Ok(())
