@@ -87,7 +87,7 @@ use structopt::StructOpt;
 
 use std::path::PathBuf;
 use texture_synthesis::{
-    image::ImageOutputFormat as ImgFmt, load_dynamic_image, ChannelMask, Dims, Error, Example,
+    image::ImageFormat as ImgFmt, load_dynamic_image, ChannelMask, Dims, Error, Example,
     ImageSource, SampleMethod, Session,
 };
 
@@ -106,7 +106,7 @@ fn parse_size(input: &str) -> Result<Dims, std::num::ParseIntError> {
 fn parse_img_fmt(input: &str) -> Result<ImgFmt, String> {
     let fmt = match input {
         "png" => ImgFmt::Png,
-        "jpg" => ImgFmt::Jpeg(75),
+        "jpg" => ImgFmt::Jpeg,
         "bmp" => ImgFmt::Bmp,
         other => {
             return Err(format!(
@@ -322,15 +322,15 @@ fn real_main() -> Result<(), Error> {
     let args = Opt::from_args();
 
     // Check that the output format or extension for the path supplied by the user is one of the ones we support
-    {
-        if args.output_path.to_str() != Some("-") {
-            match args.output_path.extension().and_then(|ext| ext.to_str()) {
-                Some("png" | "jpg" | "bmp") => {}
-                Some(other) => return Err(Error::UnsupportedOutputFormat(other.to_owned())),
-                None => return Err(Error::UnsupportedOutputFormat(String::new())),
-            }
+    let ext = args.output_path.extension().and_then(|ext| ext.to_str());
+    let _file_fmt = if args.output_path.to_str() != Some("-") {
+        match parse_img_fmt(ext.unwrap_or("<missing>")) {
+            Ok(file_fmt) => file_fmt,
+            Err(error) => return Err(Error::UnsupportedOutputFormat(error)),
         }
-    }
+    } else {
+        args.stdout_fmt
+    };
 
     let (mut examples, target_guide) = match &args.cmd {
         Subcommand::Generate(gen) => {
