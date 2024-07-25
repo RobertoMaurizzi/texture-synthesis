@@ -130,6 +130,9 @@ pub mod session;
 mod unsync;
 
 pub use image;
+use image::codecs::jpeg::JpegEncoder;
+use image::codecs::png::PngEncoder;
+use image::{Rgb, ImageEncoder, ImageFormat};
 use std::path::Path;
 
 pub use errors::Error;
@@ -379,26 +382,111 @@ pub struct GeneratedImage {
     inner: ms::Generator,
 }
 
+pub fn parse_img_fmt<P: AsRef<Path>>(file_path: P) -> Result<ImageFormat, Error> {
+    let file_path = file_path.as_ref();
+    let ext = file_path.extension().and_then(|ext| ext.to_str());
+
+    let fmt = match ext {
+        Some("png") => ImageFormat::Png,
+        Some("jpg") => ImageFormat::Jpeg,
+        Some("bmp") => ImageFormat::Bmp,
+        other => {
+            return Err(Error::UnsupportedOutputFormat(format!(
+                "image format `{}` not one of: 'png', 'jpg', 'bmp'",
+                other.unwrap_or_default()
+            )))
+        }
+    };
+
+    Ok(fmt)
+}
+
+use image::{RgbImage, RgbaImage};
+
+fn rgba_to_rgb(rgba_image: &RgbaImage) -> RgbImage {
+    let (width, height) = rgba_image.dimensions();
+    let mut rgb_image = RgbImage::new(width, height);
+
+    for y in 0..height {
+        for x in 0..width {
+            let rgba_pixel = rgba_image.get_pixel(x, y);
+            let rgb_pixel = Rgb([rgba_pixel[0], rgba_pixel[1], rgba_pixel[2]]);
+            rgb_image.put_pixel(x, y, rgb_pixel);
+        }
+    }
+
+    rgb_image
+}
+
+pub fn save_dyn_image_to_stream<W: std::io::Write>(fmt: ImageFormat, writer: &mut W, dyn_img: image::DynamicImage) -> Result<(), Error> {
+    match fmt {
+        ImageFormat::Png => {
+            let encoder = PngEncoder::new(writer);
+            encoder.write_image(
+                dyn_img.as_bytes(),
+                dyn_img.width(),
+                dyn_img.height(),
+                dyn_img.color().into(),
+            )?;
+        }
+        ImageFormat::Jpeg => {
+            let rgb_img = dyn_img.to_rgb8();
+            let mut encoder = JpegEncoder::new(writer);
+            encoder.encode(
+                rgb_img.as_raw(),
+                rgb_img.width(),
+                rgb_img.height(),
+                image::ColorType::Rgb8.into(),
+            )?;
+        }
+        // Add other formats as needed
+        _ => return Err(Error::UnsupportedOutputFormat(format!("{:?}", fmt))),
+    };
+    Ok(())
+}
+
 impl GeneratedImage {
     /// Saves the generated image to the specified path
     pub fn save<P: AsRef<Path>>(&self, path: P) -> Result<(), Error> {
         let path = path.as_ref();
-        if let Some(parent_path) = path.parent() {
-            std::fs::create_dir_all(&parent_path)?;
-        }
+        let fmt = parse_img_fmt(path)?;
 
-        self.inner.color_map.as_ref().save(&path)?;
+        if let Some(parent_path) = path.parent() {
+            std::fs::create_dir_all(parent_path)?;
+        }
+        match fmt {
+            // I can scarcely believe that newer `image` crate don't have a function for this
+            ImageFormat::Jpeg => {
+            let image_with_alpha = self.inner.color_map.as_ref();
+            let image_no_alpha = rgba_to_rgb(image_with_alpha);
+            image_no_alpha.save_with_format(&path, fmt)?
+            },
+            _ => self.inner.color_map.as_ref().save_with_format(&path, fmt)?,
+        };
+
+        // image.save_with_format(&path, fmt)?;
+
+        // self.inner.color_map.as_ref().save_with_format(&path, fmt)?;
         Ok(())
     }
 
-    /// Writes the generated image to the specified stream
-    pub fn write<W: std::io::Write>(
+    /// Old write that can't manage formats anymore
+    pub fn _write<W: std::io::Write + std::io::Seek>(
         self,
         writer: &mut W,
-        fmt: image::ImageOutputFormat,
+        fmt: image::ImageFormat,
     ) -> Result<(), Error> {
         let dyn_img = self.into_image();
         Ok(dyn_img.write_to(writer, fmt)?)
+    }
+
+    /// Writes the generated image to the specified stream
+    pub fn write<W: std::io::Write>(self, writer: &mut W, fmt: ImageFormat) -> Result<(), Error> {
+        let dyn_img = self.into_image();
+
+        save_dyn_image_to_stream(fmt, writer, dyn_img)?;
+
+        Ok(())
     }
 
     /// Saves debug information such as copied patches ids, map ids (if you have
