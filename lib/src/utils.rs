@@ -61,7 +61,6 @@ pub(crate) fn load_image(
     let img = match resize {
         None => img.to_rgba8(),
         Some(ref size) => {
-
             if img.width() != size.width || img.height() != size.height {
                 image::imageops::resize(
                     &img.to_rgba8(),

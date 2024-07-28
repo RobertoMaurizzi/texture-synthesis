@@ -132,7 +132,7 @@ mod unsync;
 pub use image;
 use image::codecs::jpeg::JpegEncoder;
 use image::codecs::png::PngEncoder;
-use image::{Rgb, ImageEncoder, ImageFormat};
+use image::{ImageEncoder, ImageFormat, Rgb};
 use std::path::Path;
 
 pub use errors::Error;
@@ -418,7 +418,11 @@ fn rgba_to_rgb(rgba_image: &RgbaImage) -> RgbImage {
     rgb_image
 }
 
-pub fn save_dyn_image_to_stream<W: std::io::Write>(fmt: ImageFormat, writer: &mut W, dyn_img: image::DynamicImage) -> Result<(), Error> {
+pub fn save_dyn_image_to_stream<W: std::io::Write>(
+    fmt: ImageFormat,
+    writer: &mut W,
+    dyn_img: image::DynamicImage,
+) -> Result<(), Error> {
     match fmt {
         ImageFormat::Png => {
             let encoder = PngEncoder::new(writer);
@@ -457,10 +461,10 @@ impl GeneratedImage {
         match fmt {
             // I can scarcely believe that newer `image` crate don't have a function for this
             ImageFormat::Jpeg => {
-            let image_with_alpha = self.inner.color_map.as_ref();
-            let image_no_alpha = rgba_to_rgb(image_with_alpha);
-            image_no_alpha.save_with_format(&path, fmt)?
-            },
+                let image_with_alpha = self.inner.color_map.as_ref();
+                let image_no_alpha = rgba_to_rgb(image_with_alpha);
+                image_no_alpha.save_with_format(&path, fmt)?
+            }
             _ => self.inner.color_map.as_ref().save_with_format(&path, fmt)?,
         };
 
