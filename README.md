@@ -21,7 +21,22 @@ Also see our talk [_More Like This, Please! Texture Synthesis and Remixing from 
 
 ## Maintenance note
 
-We at Embark are not actively using or developing these crates and would be open to transferring them to a maintainer or maintainers that would be more active. See [#166](https://github.com/EmbarkStudios/texture-synthesis/issues/166).
+The good people at Embark are not actively using or developing this crate and asked for new maintainers.
+I (Roberto) am not really sure I can pull off being a maintainer for this code, but I'll try,
+the original talk linked above is REALLY interesting and the [original Python Notebook](https://github.com/anopara/multi-resolution-texture-synthesis)
+from Anastasia Opara might help me (I wrote way more Python that Rust). Of course any advice or
+help anybody might want to provide is very welcome :-)
+
+For now I got it to work with crate `image` version 0.25.2, using a patched version of `zune-jpeg`
+that can be linked dynamically, all for usage in Bevy applications with features=dynamic).
+Right now tests are still failing due to already documented changes in image and other libraries,
+I'll see to save the test images and compare them with the (visually) expected output and if they
+match I'll update the hashes in the tests.
+Feel free to get in touch with me here or with the original authors if you think you might help
+maintaining this crate, see original issue [#166](https://github.com/EmbarkStudios/texture-synthesis/issues/166).
+Closing note: thank you so much to Embark for all their open source software, I feel like I stumbled
+upon a treasure trove (I found texture-synthesis because I wanted to create some textures for a
+jam game and it's so interesting that I ended up fixing it instead of finishing the game 😅)
 
 ## Features and examples
 
@@ -256,7 +271,7 @@ use texture_synthesis as ts;
 
 fn main() -> Result<(), ts::Error> {
     let texsynth = ts::Session::builder()
-        // Let the generator know that it is using 
+        // Let the generator know that it is using
         .inpaint_example_channel(
             ts::ChannelMask::A,
             &"imgs/bricks.png",
@@ -344,7 +359,7 @@ fn main() -> Result<(), ts::Error> {
 
     // now we can apply the same transformation of the generated image
     // onto a new image (which can be used to ensure 1-1 mapping between multiple images)
-    // NOTE: it is important to provide same number of input images as the 
+    // NOTE: it is important to provide same number of input images as the
     // otherwise, there will be coordinates mismatch
     let repeat_transform_img = generated
         .get_coordinate_transform()
@@ -369,7 +384,7 @@ out/02.png generate --save-transform out/multi.xform imgs/multiexample/1.jpg img
 imgs/multiexample/4.jpg`
 
 2. Next, we use the `repeat` subcommand to repeat transform with different
-inputs
+   inputs
 
 The important bits here are the use of the `repeat` subcommand instead of
 `generate`, and `--transform out/multi.xform` which tells what transform to
@@ -444,31 +459,31 @@ Example: `cargo run --release -- -o out/output.png flip-and-rotate imgs/1.jpg`
 
 ## Command line binary
 
-* [Download the binary](https://github.com/EmbarkStudios/texture-synthesis/releases) for your OS.
-* **Or** Install it from source.
-  * [Install Rust](https://www.rust-lang.org/tools/install) - The minimum required version is `1.37.0`
-  * [Clone this repo](https://help.github.com/en/articles/cloning-a-repository)
-  * In a terminal `cd` to the directory you cloned this repository into
-  * Run `cargo install --path=cli`
-  * **Or** if you wish to see the texture as it is being synthesized `cargo install --path=cli --features="progress"`
-* Open a terminal
-* Navigate to the directory where you downloaded the binary, if you didn't just `cargo install` it
-* Run `texture_synthesis --help` to get a list of all of the options and commands you can run
-* Refer to the examples section in this readme for examples of running the binary
+- [Download the binary](https://github.com/EmbarkStudios/texture-synthesis/releases) for your OS.
+- **Or** Install it from source.
+  - [Install Rust](https://www.rust-lang.org/tools/install) - The minimum required version is `1.37.0`
+  - [Clone this repo](https://help.github.com/en/articles/cloning-a-repository)
+  - In a terminal `cd` to the directory you cloned this repository into
+  - Run `cargo install --path=cli`
+  - **Or** if you wish to see the texture as it is being synthesized `cargo install --path=cli --features="progress"`
+- Open a terminal
+- Navigate to the directory where you downloaded the binary, if you didn't just `cargo install` it
+- Run `texture-synthesis --help` to get a list of all of the options and commands you can run
+- Refer to the examples section in this readme for examples of running the binary
 
 ## Notes
 
-* By default, generating output will use all of your logical cores
-* When using multiple threads for generation, the output image is not guaranteed to be deterministic with the same inputs. To have 100% determinism, you must use a thread count of one, which can by done via
-  * CLI - `texture-synthesis --threads 1`
-  * API - `SessionBuilder::max_thread_count(1)`
+- By default, generating output will use all of your logical cores
+- When using multiple threads for generation, the output image is not guaranteed to be deterministic with the same inputs. To have 100% determinism, you must use a thread count of one, which can by done via
+  - CLI - `texture-synthesis --threads 1`
+  - API - `SessionBuilder::max_thread_count(1)`
 
 ## Limitations
 
-* Struggles with complex semantics beyond pixel color (unless you guide it)
-* Not great with regular textures (seams can become obvious)
-* Cannot infer new information from existing information (only operates on what’s already there)
-* Designed for single exemplars or very small datasets (unlike Deep Learning based approaches)
+- Struggles with complex semantics beyond pixel color (unless you guide it)
+- Not great with regular textures (seams can become obvious)
+- Cannot infer new information from existing information (only operates on what’s already there)
+- Designed for single exemplars or very small datasets (unlike Deep Learning based approaches)
 
 ## Additional Dependencies
 
@@ -502,8 +517,8 @@ Please read our [Contributor Guide](CONTRIBUTING.md) for more information on how
 
 Licensed under either of
 
-* Apache License, Version 2.0, ([LICENSE-APACHE](LICENSE-APACHE) or <http://www.apache.org/licenses/LICENSE-2.0>)
-* MIT license ([LICENSE-MIT](LICENSE-MIT) or <http://opensource.org/licenses/MIT>)
+- Apache License, Version 2.0, ([LICENSE-APACHE](LICENSE-APACHE) or <http://www.apache.org/licenses/LICENSE-2.0>)
+- MIT license ([LICENSE-MIT](LICENSE-MIT) or <http://opensource.org/licenses/MIT>)
 
 at your option.
 
